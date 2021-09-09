@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
          "/[LANG]"
          "/[COMPUTER]"
          "/[UID]";
-    for (int i = 0; i < arr.size(); i++)
+    for (unsigned int i = 0; i < arr.size(); i++)
     {
     std::cout << arr[i] << " = ";
     lib.ExpandString(arr[i]);
