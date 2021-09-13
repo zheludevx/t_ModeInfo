@@ -36,8 +36,7 @@ int main(int argc, char* argv[])
     }
     std::string str;
     str = getenv("NITAETC");
-    boost::filesystem::directory_iterator begin(str);
-    boost::filesystem::directory_iterator end;
+    boost::filesystem::directory_iterator begin(str), end;
     std::cout << std::endl << "$NITAETC groups:" << std::endl;
     for ( ; begin != end; ++begin)
     {
