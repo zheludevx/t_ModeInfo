@@ -8,7 +8,7 @@ CONFIG += \
           thread 
 
 unix {
-    LIBS +=-ldl
+    LIBS +=-ldl -lboost_filesystem -lboost_system 
     TARGET=$${TARGET}.bin
 }
 

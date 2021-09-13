@@ -1,7 +1,9 @@
 #include <ModeInfo.h>
-#include <iostream>
 #include <vector>
 #include <string>
+#include <stdlib.h>
+#include <boost/filesystem.hpp>
+#include <iostream>
 
 int main(int argc, char* argv[])
 {
@@ -18,7 +20,7 @@ int main(int argc, char* argv[])
     arr.push_back("[COMPUTER]");
     arr.push_back("[UID]");
     std::string sText =
-         "%%NITAROOT%%"
+            "%%NITAROOT%%"
          "/[GROUP]"
          "/[CFG]"
          "/[PRODUCT]"
@@ -28,9 +30,19 @@ int main(int argc, char* argv[])
          "/[UID]";
     for (unsigned int i = 0; i < arr.size(); i++)
     {
-    std::cout << arr[i] << " = ";
-    lib.ExpandString(arr[i]);
-    std::cout<< "\"" << arr[i] << "\"" << std::endl;
+        std::cout << arr[i] << " = ";
+        lib.ExpandString(arr[i]);
+        std::cout<< "\"" << arr[i] << "\"" << std::endl;
+    }
+    std::string str;
+    str = getenv("NITAETC");
+    boost::filesystem::directory_iterator begin(str);
+    boost::filesystem::directory_iterator end;
+    std::cout << std::endl << "$NITAETC groups:" << std::endl;
+    for ( ; begin != end; ++begin)
+    {
+        if (begin->path().extension() == ".xml")
+            std::cout << *begin << std::endl;
     }
     lib.Free();
     return 0;
