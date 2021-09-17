@@ -6,13 +6,53 @@
 #include <exception>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/fstream.hpp>
+#include <boost/filesystem/path.hpp>
 #include <iostream>
+
+void checkSystem (std::string &s)
+{
+    std::cout << "Подстрока найдена в позиции "<< s.find("system") << std::endl;
+    if (s.find("system") == 0)
+        std::cout << "Данная строка подходит" << std::endl;
+    else
+        std::cout << "Данная строка не подходит" << std::endl;
+    std::cout << std::endl;
+}
+
+void checkXml (std::string &s)
+{
+    std::cout << "Индекс позиции расширения "<< s.find(".xml") << std::endl;
+    if (( s.find(".xml") + 4) == s.length())
+        std::cout << "Данная подстрока подходит" << std::endl;
+    else
+        std::cout << "Данная подстрока не подходит" << std::endl;
+    std::cout << std::endl;
+}
+
+void checkRxml(std::string &s)
+{
+    std::cout << "Индекс r позиции расширения "<< s.find(".xml") << std::endl;
+    if ( s.find(".xml")  == (s.length() - 4 ))
+        std::cout << "Данная подстрока подходит" << std::endl;
+    else
+        std::cout << "Данная подстрока не подходит" << std::endl;
+    std::cout << std::endl;
+}
+
+void sVivod (std::string &s)
+{
+    std::cout << "Подстрока из последних 4 символов: " << "\""<< s.substr(s.length() - 4 ) << "\"" << std::endl;
+    if ( s.substr(s.length() - 4 ) == ".xml"  )
+        std::cout << "Данная подстрока подходит" << std::endl;
+    else
+        std::cout << "Данная подстрока не подходит" << std::endl;
+}
 
 int main(int argc, char* argv[])
 {
     plug_key::CModeInfoPlug lib;
     bool bRes = lib.Load();
-    std::cout << "RES>" << bRes << std::endl;
+    std::cout << "RES>" << bRes << std::endl << std::endl;
     std::vector<std::string> arr;
     arr.push_back("%NITAROOT%");
     arr.push_back("[GROUP]");
@@ -37,30 +77,13 @@ int main(int argc, char* argv[])
         lib.ExpandString(arr[i]);
         std::cout<< "\"" << arr[i] << "\"" << std::endl;
     }
-    std::string str;
-    str = getenv("NITAETC");
-    boost::filesystem::directory_iterator begin(str), end, begin1(str);
-    std::cout << std::endl << "$NITAETC groups:" << std::endl;
-    try
-    {
-        for ( ; begin != end; ++begin)
-        {
-            if (begin->path().extension() == ".xml")
-                std::cout << *begin << std::endl;
-        }
-        std::cout << std::endl;
-        for ( ; begin1 != end; ++begin1)
-        {
-            if ((begin1->path().string().find("system") == 19) && (begin1->path().string().find(".xml") == 29 ))
-                std::cout << begin1->path() << std::endl;
-        }
-    }
-    catch(const std::exception& e)
-    {
-        std::cerr << "Exception: " << e.what();
-        return 1;
-    }
     std::cout << std::endl << std::endl;
+    std::string s;
+    getline(std::cin, s);
+    checkSystem (s);
+    checkXml (s);
+    checkRxml(s);
+    sVivod (s);
     lib.Free();
     return 0;
 }
