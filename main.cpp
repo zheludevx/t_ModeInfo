@@ -9,87 +9,88 @@
 #include <boost/filesystem/path.hpp>
 #include <iostream>
 
-bool checkSystem (std::string &s)
+bool checkSystem (std::string &vStr)
 {
     bool bRes = false;
-    unsigned int system = s.find("system");
-    if (!system)
+    size_t sztSystem = vStr.find("system");
+    if (sztSystem != std::string::npos)
     {
-        std::cout << "Подстрока найдена в позиции "<< system << std::endl;
-        if (system == 0)
+        std::cout << "Подстрока найдена в позиции "<< sztSystem << std::endl;
+        if (sztSystem == 0)
         {
-          std::cout << "Данная подстрока подходит" << std::endl << std::endl;
-          bRes = true;
+            std::cout << "Данная подстрока подходит" << std::endl << std::endl;
+            bRes = true;
         }
         else
-          std::cout << "Данная подстрока не подходит" << std::endl << std::endl;
+            std::cout << "Данная подстрока не подходит" << std::endl << std::endl;
+        return bRes;
+    }
+    else
+    { 
+        std::cout << "Данная подстрока не найдена" << std::endl << std::endl;
+        return bRes;
+    }   
+}
+
+bool checkXml (std::string &vStr)
+{
+    bool bRes = false;
+    size_t sztXml = vStr.find(".xml");
+    if (sztXml != std::string::npos)
+    {
+        std::cout << "Индекс позиции расширения "<< sztXml << std::endl;
+        if ((sztXml + 4) == vStr.length())
+        {
+            std::cout << "Данная подстрока подходит" << std::endl << std::endl;
+            bRes = true;
+        }
+        else
+            std::cout << "Данная подстрока не подходит" << std::endl << std::endl;
         return bRes;
     }
     else
     {
-        std::cout << "Подстрока не найдена" << std::endl << std::endl;
-        return bRes;   
+        std::cout << "Данное расширение не найдено" << std::endl << std::endl;
+        return bRes;
     }
 }
 
-bool checkXml (std::string &s)
+bool checkRxml(std::string &vStr)
 {
     bool bRes = false;
-    if (s.find("system"))
-      return bRes;
+    size_t sztRxml = vStr.find(".xml");
+    if (sztRxml != std::string::npos)
+    {
+        std::cout << "Индекс r позиции расширения "<< sztRxml << std::endl;
+        if (sztRxml  == (vStr.length() - 4 ))
+        {
+            std::cout << "Данная подстрока подходит" << std::endl << std::endl;
+            bRes = true;
+        }
+        else
+            std::cout << "Данная подстрока не подходит" << std::endl << std::endl;
+        return bRes;
+    }
     else
     {
-      unsigned int xml = s.find(".xml");
-      std::cout << "Индекс позиции расширения "<< xml << std::endl;
-      if ((xml + 4) == s.length())
-      {
-          std::cout << "Данная подстрока подходит" << std::endl << std::endl;
-          bRes = true;
-      }
-      else
-          std::cout << "Данная подстрока не подходит" << std::endl << std::endl;
-      return bRes;
+     	std::cout << "Данное r расширение не найдено" << std::endl << std::endl;
+        return bRes;
     }
 }
 
-bool checkRxml(std::string &s)
+bool sVivod (std::string &vStr)
 {
     bool bRes = false;
-    if (s.find("system"))
-     return bRes;
-    else
+    std::string sSubstr = vStr.substr(vStr.length() - 4);
+    std::cout << "Подстрока из последних 4 символов: " << "\""<< sSubstr << "\"" << std::endl;
+    if (sSubstr == ".xml")
     {
-      unsigned int rxml = s.find(".xml");
-      std::cout << "Индекс r позиции расширения "<< rxml << std::endl;
-      if (rxml  == (s.length() - 4 ))
-      {
-          std::cout << "Данная подстрока подходит" << std::endl << std::endl;
-          bRes = true;
-      }
-      else
-          std::cout << "Данная подстрока не подходит" << std::endl << std::endl;
-      return bRes;
+       std::cout << "Данная подстрока подходит" << std::endl << std::endl;
+       bRes = true;
     }
-}
-
-bool sVivod (std::string &s)
-{
-    bool bRes = false;
-    if (s.find("system"))
-     return bRes;
     else
-    {
-      std::string sSubstr = s.substr(s.length() - 4);
-      std::cout << "Подстрока из последних 4 символов: " << "\""<< sSubstr << "\"" << std::endl;
-      if (sSubstr == ".xml")
-      {
-          std::cout << "Данная подстрока подходит" << std::endl << std::endl;
-          bRes = true;
-      }
-      else
-          std::cout << "Данная подстрока не подходит" << std::endl << std::endl;
-      return bRes;
-    }
+       std::cout << "Данная подстрока не подходит" << std::endl << std::endl;
+    return bRes;
 }
 
 int main(int argc, char* argv[])
@@ -97,15 +98,15 @@ int main(int argc, char* argv[])
     plug_key::CModeInfoPlug lib;
     bool bRes = lib.Load();
     std::cout << "RES>" << bRes << std::endl << std::endl;
-    std::vector<std::string> arr;
-    arr.push_back("%NITAROOT%");
-    arr.push_back("[GROUP]");
-    arr.push_back("[CFG]");
-    arr.push_back("[PRODUCT]");
-    arr.push_back("[MODE]");
-    arr.push_back("[LANG]");
-    arr.push_back("[COMPUTER]");
-    arr.push_back("[UID]");
+    std::vector<std::string> vArr;
+    vArr.push_back("%NITAROOT%");
+    vArr.push_back("[GROUP]");
+    vArr.push_back("[CFG]");
+    vArr.push_back("[PRODUCT]");
+    vArr.push_back("[MODE]");
+    vArr.push_back("[LANG]");
+    vArr.push_back("[COMPUTER]");
+    vArr.push_back("[UID]");
     std::string sText =
             "%%NITAROOT%%"
          "/[GROUP]"
@@ -115,33 +116,33 @@ int main(int argc, char* argv[])
          "/[LANG]"
          "/[COMPUTER]"
          "/[UID]";
-    for (unsigned int i = 0; i < arr.size(); i++)
+    for (unsigned int i = 0; i < vArr.size(); i++)
     {
-        std::cout << arr[i] << " = ";
-        lib.ExpandString(arr[i]);
-        std::cout<< "\"" << arr[i] << "\"" << std::endl;
+        std::cout << vArr[i] << " = ";
+        lib.ExpandString(vArr[i]);
+        std::cout<< "\"" << vArr[i] << "\"" << std::endl;
     }
     std::cout << std::endl << std::endl;
-    std::string str = getenv("NITAETC");
-    std::vector<std::string> s;
-    boost::filesystem::directory_iterator begin(str), end;
+    std::string sEnvir = getenv("NITAETC");
+    std::vector<std::string> vStr;
+    boost::filesystem::directory_iterator it(sEnvir), end;
     try
     {
-        for ( ; begin != end; ++begin)
-            s.push_back(begin->path().filename());
+        for ( ; it != end; ++it)
+            vStr.push_back(it->path().filename());
     }
     catch (const std::exception& e)
     {
         std::cerr << "Exception: " << e.what();
         return 1;
     }
-    for (unsigned int i = 0; i < s.size(); i++)
+    for (unsigned int i = 0; i < vStr.size(); i++)
     {
-        std::cout << s[i] << std::endl;
-        checkSystem (s[i]);
-        checkXml (s[i]);
-        checkRxml (s[i]);
-        sVivod (s[i]);
+        std::cout << vStr[i] << std::endl;
+        checkSystem (vStr[i]);
+        checkXml (vStr[i]);
+        checkRxml (vStr[i]);
+        sVivod (vStr[i]);
     }
     lib.Free();
     return 0;
