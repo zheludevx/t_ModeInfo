@@ -13,60 +13,83 @@ bool checkSystem (std::string &s)
 {
     bool bRes = false;
     unsigned int system = s.find("system");
-    std::cout << "Подстрока найдена в позиции "<< system << std::endl;
-    if (system == 0)
+    if (!system)
     {
-        std::cout << "Данная подстрока подходит" << std::endl << std::endl;
-        bRes = true;
+        std::cout << "Подстрока найдена в позиции "<< system << std::endl;
+        if (system == 0)
+        {
+          std::cout << "Данная подстрока подходит" << std::endl << std::endl;
+          bRes = true;
+        }
+        else
+          std::cout << "Данная подстрока не подходит" << std::endl << std::endl;
+        return bRes;
     }
     else
-        std::cout << "Данная подстрока не подходит" << std::endl << std::endl;
-    return bRes;
+    {
+        std::cout << "Подстрока не найдена" << std::endl << std::endl;
+        return bRes;   
+    }
 }
 
 bool checkXml (std::string &s)
 {
     bool bRes = false;
-    unsigned int xml = s.find(".xml");
-    std::cout << "Индекс позиции расширения "<< xml << std::endl;
-    if ((xml + 4) == s.length())
-    {
-        std::cout << "Данная подстрока подходит" << std::endl << std::endl;
-        bRes = true;
-    }
+    if (s.find("system"))
+      return bRes;
     else
-        std::cout << "Данная подстрока не подходит" << std::endl << std::endl;
-    return bRes;
+    {
+      unsigned int xml = s.find(".xml");
+      std::cout << "Индекс позиции расширения "<< xml << std::endl;
+      if ((xml + 4) == s.length())
+      {
+          std::cout << "Данная подстрока подходит" << std::endl << std::endl;
+          bRes = true;
+      }
+      else
+          std::cout << "Данная подстрока не подходит" << std::endl << std::endl;
+      return bRes;
+    }
 }
 
 bool checkRxml(std::string &s)
 {
     bool bRes = false;
-    unsigned int rxml = s.find(".xml");
-    std::cout << "Индекс r позиции расширения "<< rxml << std::endl;
-    if (rxml  == (s.length() - 4 ))
-    {
-        std::cout << "Данная подстрока подходит" << std::endl << std::endl;
-        bRes = true;
-    }
+    if (s.find("system"))
+     return bRes;
     else
-        std::cout << "Данная подстрока не подходит" << std::endl << std::endl;
-    return bRes;
+    {
+      unsigned int rxml = s.find(".xml");
+      std::cout << "Индекс r позиции расширения "<< rxml << std::endl;
+      if (rxml  == (s.length() - 4 ))
+      {
+          std::cout << "Данная подстрока подходит" << std::endl << std::endl;
+          bRes = true;
+      }
+      else
+          std::cout << "Данная подстрока не подходит" << std::endl << std::endl;
+      return bRes;
+    }
 }
 
 bool sVivod (std::string &s)
 {
     bool bRes = false;
-    std::string sSubstr = s.substr(s.length() - 4);
-    std::cout << "Подстрока из последних 4 символов: " << "\""<< sSubstr << "\"" << std::endl;
-    if (sSubstr == ".xml")
-    {
-        std::cout << "Данная подстрока подходит" << std::endl << std::endl;
-        bRes = true;
-    }
+    if (s.find("system"))
+     return bRes;
     else
-        std::cout << "Данная подстрока не подходит" << std::endl << std::endl;
-    return bRes;
+    {
+      std::string sSubstr = s.substr(s.length() - 4);
+      std::cout << "Подстрока из последних 4 символов: " << "\""<< sSubstr << "\"" << std::endl;
+      if (sSubstr == ".xml")
+      {
+          std::cout << "Данная подстрока подходит" << std::endl << std::endl;
+          bRes = true;
+      }
+      else
+          std::cout << "Данная подстрока не подходит" << std::endl << std::endl;
+      return bRes;
+    }
 }
 
 int main(int argc, char* argv[])
