@@ -1,14 +1,14 @@
 TEMPLATE =	app
 
 win32 :	DEFINES -= UNICODE
-
+CONFIG += console boost164
 CONFIG -= qt
 CONFIG += \
           warn_on \ 
           thread 
 
 unix {
-    LIBS +=-ldl -lboost_filesystem -lboost_system
+    LIBS +=-ldl -lboost_filesystem -lboost_system -lboost_program_options
     TARGET=$${TARGET}.bin
 }
 
