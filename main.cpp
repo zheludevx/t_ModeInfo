@@ -87,7 +87,7 @@ int main(int argc, char* argv[])
            vFileName.push_back(it->path().filename().string());
 
         for (unsigned int i = 0; i < vFileName.size(); i++)
-        {
+        {   
             Rename(vFileName[i]);
             if (checkSystem(vFileName[i]) && checkXml(vFileName[i]))
                 std::cout << vFileName[i] << std::endl;
@@ -103,9 +103,8 @@ int main(int argc, char* argv[])
         boost::program_options::store(boost::program_options::parse_command_line(argc,argv,desc), vm);
         boost::program_options::notify(vm);
         std::cout << std::endl << desc << std::endl;
-        //if (vm.count("set_system_xml") >= 1)
-            // create_symlink ???
-                                
+        if (vm.count("set_system_xml") >= 1)
+              boost::filesystem::create_symlink("$NITAETC/system.xml", "vFileName");
     }
     catch (const std::exception& e)
     {
