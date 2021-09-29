@@ -84,7 +84,7 @@ int main(int argc, char* argv[])
     try
     {
         for ( ; it != end; ++it)
-            vFileName.push_back(it->path().filename().string());
+           vFileName.push_back(it->path().filename().string());
 
         for (unsigned int i = 0; i < vFileName.size(); i++)
         {
@@ -95,17 +95,17 @@ int main(int argc, char* argv[])
 
         boost::program_options::options_description desc("Command Parser");
         desc.add_options()
-                ("set_system_xml,x", boost::program_options::value<std::vector<std::string> >(&vCommandName)->multitoken(),
-                 "set_system_xml <some_system_xml> file")
+                ("set_system_xml,x", 
+                   boost::program_options::value<std::vector<std::string> >(&vCommandName)->multitoken(),
+                    "set_system_xml <some_system_xml> file")
                 ;
         boost::program_options::variables_map vm;
         boost::program_options::store(boost::program_options::parse_command_line(argc,argv,desc), vm);
         boost::program_options::notify(vm);
         std::cout << std::endl << desc << std::endl;
-        
-        if (vm.count("set_system_xml") >= 1)
-            boost::filesystem::create_symlink("$NITAETC/system.xml", "vFileName");
-
+        //if (vm.count("set_system_xml") >= 1)
+            // create_symlink ???
+                                
     }
     catch (const std::exception& e)
     {
