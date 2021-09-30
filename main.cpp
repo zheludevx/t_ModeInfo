@@ -40,8 +40,7 @@ bool Rename (std::string& sFileName)
     bool bRes = false;
     if (sFileName == "system.xml")
     {
-        std::string sReplace = "system.xml.bak";
-        sFileName.replace(0, 14, sReplace);
+        sFileName += ".bak";
         bRes = true;
     }
     return bRes;
@@ -86,13 +85,6 @@ int main(int argc, char* argv[])
         for ( ; it != end; ++it)
            vFileName.push_back(it->path().filename().string());
 
-        for (unsigned int i = 0; i < vFileName.size(); i++)
-        {   
-            Rename(vFileName[i]);
-            if (checkSystem(vFileName[i]) && checkXml(vFileName[i]))
-                std::cout << vFileName[i] << std::endl;
-        }
-
         boost::program_options::options_description desc("Command Parser");
         desc.add_options()
                 ("set_system_xml,x", 
@@ -104,7 +96,17 @@ int main(int argc, char* argv[])
         boost::program_options::notify(vm);
         std::cout << std::endl << desc << std::endl;
         if (vm.count("set_system_xml") >= 1)
-              boost::filesystem::create_symlink("$NITAETC/system.xml", "vFileName");
+        {
+              for (unsigned int i = 0; i < vFileName.size(); i++)
+              {
+                  Rename(vFileName[i]);
+                  if (checkSystem(vFileName[i]) && checkXml(vFileName[i]))
+                  {
+                    std::cout << vFileName[i] << std::endl;
+                    boost::filesystem::create_symlink(vFileName[i], "system.xml");
+                  }
+              }
+        }
     }
     catch (const std::exception& e)
     {
