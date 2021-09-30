@@ -103,7 +103,7 @@ int main(int argc, char* argv[])
                   if (checkSystem(vFileName[i]) && checkXml(vFileName[i]))
                   {
                     std::cout << vFileName[i] << std::endl;
-                    boost::filesystem::create_symlink(vFileName[i], "system.xml");
+                    boost::filesystem::create_symlink(vFileName[i], "system.xml"); 
                   }
               }
         }
