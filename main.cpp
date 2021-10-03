@@ -69,43 +69,45 @@ int main(int argc, char* argv[])
          "/[LANG]"
          "/[COMPUTER]"
          "/[UID]";
-    for (unsigned int i = 0; i < vArr.size(); i++)
-    {
-        std::cout << vArr[i] << " = ";
-        lib.ExpandString(vArr[i]);
-        std::cout<< "\"" << vArr[i] << "\"" << std::endl;
-    }
-    std::cout << std::endl << std::endl;
     std::string sEnvir = getenv("NITAETC");
+    std::string sSystemXml = "/system.xml";
     std::vector<std::string> vFileName;
-    std::vector<std::string> vCommandName;
     boost::filesystem::directory_iterator it(sEnvir), end;
     try
     {
         for ( ; it != end; ++it)
-           vFileName.push_back(it->path().filename().string());
+            vFileName.push_back(it->path().filename().string());
+
+        std::cout << "NITAETC groups:" << std::endl;
+        for (unsigned int i = 0; i < vFileName.size(); i++)
+        {
+            Rename(vFileName[i]);
+            if (checkSystem(vFileName[i]) && checkXml(vFileName[i]))
+                std::cout << vFileName[i] << std::endl;
+        }
+        std::cout << std::endl << std::endl;
 
         boost::program_options::options_description desc("Command Parser");
         desc.add_options()
-                ("set_system_xml,x", 
-                   boost::program_options::value<std::vector<std::string> >(&vCommandName)->multitoken(),
-                    "set_system_xml <some_system_xml> file")
+                ("set_system_xml,x",
+                 boost::program_options::value<std::string>(),
+                 "set_system_xml <some_system_xml> file")
                 ;
         boost::program_options::variables_map vm;
         boost::program_options::store(boost::program_options::parse_command_line(argc,argv,desc), vm);
         boost::program_options::notify(vm);
-        std::cout << std::endl << desc << std::endl;
-        if (vm.count("set_system_xml") >= 1)
+
+        if (vm.count("set_system_xml") == 1)
         {
-              for (unsigned int i = 0; i < vFileName.size(); i++)
-              {
-                  Rename(vFileName[i]);
-                  if (checkSystem(vFileName[i]) && checkXml(vFileName[i]))
-                  {
-                    std::cout << vFileName[i] << std::endl;
-                    boost::filesystem::create_symlink(vFileName[i], "system.xml"); 
-                  }
-              }
+            std::cout << "arg:" << vm["set_system_xml"].as<std::string>() << std::endl << std::endl << std::endl;
+            boost::filesystem::path pArg = vm["set_system_xml"].as<std::string>();
+            std::string sArgName = pArg.filename().string();
+            if (checkSystem(sArgName) && checkXml(sArgName))
+            {
+                if (boost::filesystem::is_symlink(sEnvir+sSystemXml))
+                    boost::filesystem::remove(sEnvir+sSystemXml);
+                boost::filesystem::create_symlink(pArg, sEnvir+sSystemXml);
+            }
         }
     }
     catch (const std::exception& e)
@@ -115,6 +117,12 @@ int main(int argc, char* argv[])
     catch(...)
     {
         std::cerr << "Exception of unknown type!" << std::endl;
+    }
+    for (unsigned int i = 0; i < vArr.size(); i++)
+    {
+        std::cout << vArr[i] << " = ";
+        lib.ExpandString(vArr[i]);
+        std::cout<< "\"" << vArr[i] << "\"" << std::endl;
     }
     lib.Free();
     return 0;
