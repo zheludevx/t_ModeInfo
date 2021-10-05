@@ -46,6 +46,80 @@ bool Rename (std::string& sFileName)
     return bRes;
 }
 
+bool cinArg (int ac, char* av[], boost::program_options::variables_map& vm)
+{   
+    bool bRes = false;
+    try
+    {
+        boost::program_options::options_description desc("Command Parser");
+        desc.add_options()
+                ("set_system_xml,x",
+                 boost::program_options::value<std::string>(),
+                 "set_system_xml <some_system_xml> file")
+                ;
+        boost::program_options::store(boost::program_options::parse_command_line(ac,av,desc), vm);
+
+        if (vm.size() == 0)
+            std::cout << desc << std::endl;
+        else
+        {
+            boost::program_options::notify(vm);
+            bRes = true;
+        }
+    }
+    catch(std::exception& e)
+    {
+        std::cerr << "error: " << e.what() << std::endl;
+    }
+    catch(...)
+    {
+        std::cerr << "Exception of unknown type!" << std::endl;
+    }
+    return bRes;
+}
+
+bool checkArg(const boost::program_options::variables_map& vm, std::vector<std::string> vFileName,
+              const std::string& sEnvir, const std::string& sSystemXml)
+{   
+    bool bRes = false;
+    try
+    {
+        if (vm.count("set_system_xml") == 1)
+        {
+            std::cout << "arg:" << vm["set_system_xml"].as<std::string>() << std::endl;
+            boost::filesystem::path pArg = vm["set_system_xml"].as<std::string>();
+            std::string sArgName = pArg.string();
+            int iCheckFileExistence = 0;
+
+            for (unsigned int i = 0; i < vFileName.size(); i++)
+                if (sArgName == vFileName[i])
+                    iCheckFileExistence++;
+
+            if (iCheckFileExistence > 0)
+            {
+                if (checkSystem(sArgName) && checkXml(sArgName))
+                {
+                    if (boost::filesystem::is_symlink(sEnvir+sSystemXml))
+                        boost::filesystem::remove(sEnvir+sSystemXml);
+                    boost::filesystem::create_symlink(pArg, sEnvir+sSystemXml);
+                    bRes = true;
+                }
+            }
+            else
+                std::cout << "ERR> File not found: " << sArgName  << std::endl;
+        }
+    }
+    catch(std::exception& e)
+    {
+        std::cerr << "error: " << e.what() << std::endl;
+    }
+    catch(...)
+    {
+        std::cerr << "Exception of unknown type!" << std::endl;
+    }
+    return bRes;
+}
+
 int main(int argc, char* argv[])
 {
     plug_key::CModeInfoPlug lib;
@@ -72,12 +146,12 @@ int main(int argc, char* argv[])
     std::string sEnvir = getenv("NITAETC");
     std::string sSystemXml = "/system.xml";
     std::vector<std::string> vFileName;
-    boost::filesystem::directory_iterator it(sEnvir), end;
     try
     {
+        boost::filesystem::directory_iterator it(sEnvir), end;
         for ( ; it != end; ++it)
             vFileName.push_back(it->path().filename().string());
-
+        std::cout << "system.xml -> " << boost::filesystem::read_symlink(sEnvir+sSystemXml) << std::endl;
         std::cout << "NITAETC groups:" << std::endl;
         for (unsigned int i = 0; i < vFileName.size(); i++)
         {
@@ -87,28 +161,11 @@ int main(int argc, char* argv[])
         }
         std::cout << std::endl << std::endl;
 
-        boost::program_options::options_description desc("Command Parser");
-        desc.add_options()
-                ("set_system_xml,x",
-                 boost::program_options::value<std::string>(),
-                 "set_system_xml <some_system_xml> file")
-                ;
         boost::program_options::variables_map vm;
-        boost::program_options::store(boost::program_options::parse_command_line(argc,argv,desc), vm);
-        boost::program_options::notify(vm);
+        cinArg(argc, argv, vm);
+        checkArg(vm, vFileName, sEnvir, sSystemXml);
 
-        if (vm.count("set_system_xml") == 1)
-        {
-            std::cout << "arg:" << vm["set_system_xml"].as<std::string>() << std::endl << std::endl << std::endl;
-            boost::filesystem::path pArg = vm["set_system_xml"].as<std::string>();
-            std::string sArgName = pArg.filename().string();
-            if (checkSystem(sArgName) && checkXml(sArgName))
-            {
-                if (boost::filesystem::is_symlink(sEnvir+sSystemXml))
-                    boost::filesystem::remove(sEnvir+sSystemXml);
-                boost::filesystem::create_symlink(pArg, sEnvir+sSystemXml);
-            }
-        }
+        std::cout << std::endl << std::endl;
     }
     catch (const std::exception& e)
     {
