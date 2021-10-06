@@ -120,6 +120,16 @@ bool checkArg(const boost::program_options::variables_map& vm, std::vector<std::
     return bRes;
 }
 
+void outputCfg (std::vector<std::string>& vArr, plug_key::CModeInfoPlug& lib)
+{
+    for (unsigned int i = 0; i < vArr.size(); i++)
+    {
+     	std::cout << vArr[i] << " = ";
+        lib.ExpandString(vArr[i]);
+        std::cout<< "\"" << vArr[i] << "\"" << std::endl;
+    }
+}
+
 int main(int argc, char* argv[])
 {
     plug_key::CModeInfoPlug lib;
@@ -151,7 +161,12 @@ int main(int argc, char* argv[])
         boost::filesystem::directory_iterator it(sEnvir), end;
         for ( ; it != end; ++it)
             vFileName.push_back(it->path().filename().string());
-        std::cout << "system.xml -> " << boost::filesystem::read_symlink(sEnvir+sSystemXml) << std::endl;
+
+        if (boost::filesystem::is_symlink(sEnvir+sSystemXml))
+            std::cout << "system.xml -> " << boost::filesystem::read_symlink(sEnvir+sSystemXml) << std::endl;
+        else 
+            std::cout << "ERR> Symlink not found" << std::endl;
+
         std::cout << "NITAETC groups:" << std::endl;
         for (unsigned int i = 0; i < vFileName.size(); i++)
         {
@@ -164,7 +179,6 @@ int main(int argc, char* argv[])
         boost::program_options::variables_map vm;
         cinArg(argc, argv, vm);
         checkArg(vm, vFileName, sEnvir, sSystemXml);
-
         std::cout << std::endl << std::endl;
     }
     catch (const std::exception& e)
@@ -175,12 +189,7 @@ int main(int argc, char* argv[])
     {
         std::cerr << "Exception of unknown type!" << std::endl;
     }
-    for (unsigned int i = 0; i < vArr.size(); i++)
-    {
-        std::cout << vArr[i] << " = ";
-        lib.ExpandString(vArr[i]);
-        std::cout<< "\"" << vArr[i] << "\"" << std::endl;
-    }
+    outputCfg(vArr, lib);
     lib.Free();
     return 0;
 }
