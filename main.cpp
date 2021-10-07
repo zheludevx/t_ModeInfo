@@ -120,20 +120,13 @@ bool checkArg(const boost::program_options::variables_map& vm, std::vector<std::
     return bRes;
 }
 
-void outputCfg (std::vector<std::string>& vArr, plug_key::CModeInfoPlug& lib)
+bool outputCfg(const boost::program_options::variables_map& vm, std::vector<std::string> vFileName,
+               const std::string& sEnvir, const std::string& sSystemXml)
 {
-    for (unsigned int i = 0; i < vArr.size(); i++)
-    {
-     	std::cout << vArr[i] << " = ";
-        lib.ExpandString(vArr[i]);
-        std::cout<< "\"" << vArr[i] << "\"" << std::endl;
-    }
-}
-
-int main(int argc, char* argv[])
-{
+    checkArg(vm, vFileName, sEnvir, sSystemXml);
     plug_key::CModeInfoPlug lib;
     bool bRes = lib.Load();
+    std::cout << std::endl << std::endl;
     std::cout << "RES>" << bRes << std::endl << std::endl;
     std::vector<std::string> vArr;
     vArr.push_back("%NITAROOT%");
@@ -144,15 +137,18 @@ int main(int argc, char* argv[])
     vArr.push_back("[LANG]");
     vArr.push_back("[COMPUTER]");
     vArr.push_back("[UID]");
-    std::string sText =
-            "%%NITAROOT%%"
-         "/[GROUP]"
-         "/[CFG]"
-         "/[PRODUCT]"
-         "/[MODE]"
-         "/[LANG]"
-         "/[COMPUTER]"
-         "/[UID]";
+    for (unsigned int i = 0; i < vArr.size(); i++)
+    {
+        std::cout << vArr[i] << " = ";
+        lib.ExpandString(vArr[i]);
+        std::cout<< "\"" << vArr[i] << "\"" << std::endl;
+    }
+    return bRes;
+    lib.Free();
+}
+
+int main(int argc, char* argv[])
+{
     std::string sEnvir = getenv("NITAETC");
     std::string sSystemXml = "/system.xml";
     std::vector<std::string> vFileName;
@@ -164,7 +160,7 @@ int main(int argc, char* argv[])
 
         if (boost::filesystem::is_symlink(sEnvir+sSystemXml))
             std::cout << "system.xml -> " << boost::filesystem::read_symlink(sEnvir+sSystemXml) << std::endl;
-        else 
+        else
             std::cout << "ERR> Symlink not found" << std::endl;
 
         std::cout << "NITAETC groups:" << std::endl;
@@ -178,7 +174,7 @@ int main(int argc, char* argv[])
 
         boost::program_options::variables_map vm;
         cinArg(argc, argv, vm);
-        checkArg(vm, vFileName, sEnvir, sSystemXml);
+        outputCfg(vm, vFileName, sEnvir, sSystemXml);
         std::cout << std::endl << std::endl;
     }
     catch (const std::exception& e)
@@ -189,7 +185,5 @@ int main(int argc, char* argv[])
     {
         std::cerr << "Exception of unknown type!" << std::endl;
     }
-    outputCfg(vArr, lib);
-    lib.Free();
     return 0;
 }
