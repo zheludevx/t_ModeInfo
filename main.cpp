@@ -46,21 +46,69 @@ bool Rename (std::string& sFileName)
     return bRes;
 }
 
+bool outputCfg(std::vector<std::string>& vArr)
+{
+    plug_key::CModeInfoPlug lib;
+    bool bRes = lib.Load();
+    std::cout << "RES>" << bRes << std::endl << std::endl;
+    vArr.push_back("%NITAROOT%");
+    vArr.push_back("[GROUP]");
+    vArr.push_back("[CFG]");
+    vArr.push_back("[PRODUCT]");
+    vArr.push_back("[MODE]");
+    vArr.push_back("[LANG]");
+    vArr.push_back("[COMPUTER]");
+    vArr.push_back("[UID]");
+    for (unsigned int i = 0; i < vArr.size(); i++)
+    {
+        std::cout << vArr[i] << " = ";
+        lib.ExpandString(vArr[i]);
+        std::cout<< "\"" << vArr[i] << "\"" << std::endl;
+    }
+    std::cout << std::endl << std::endl;
+    lib.Free();
+    return bRes;
+}
+
+bool outputGroups(std::vector<std::string>& vFileName, const std::string& sEnvir, const std::string& sSystemXml)
+{
+    bool bRes = false;
+    if (boost::filesystem::is_symlink(sEnvir+sSystemXml))
+        std::cout << "system.xml -> " << boost::filesystem::read_symlink(sEnvir+sSystemXml) << std::endl;
+    else
+        std::cout << "ERR> Symlink not found" << std::endl;
+    std::cout << "NITAETC groups:" << std::endl;
+    for (unsigned int i = 0; i < vFileName.size(); i++)
+    {
+        Rename(vFileName[i]);
+        if (checkSystem(vFileName[i]) && checkXml(vFileName[i]))
+        {
+            std::cout << vFileName[i] << std::endl;
+            bRes = true;
+        }
+    }
+    std::cout << std::endl << std::endl;
+    return bRes;
+}
+
 bool cinArg (int ac, char* av[], boost::program_options::variables_map& vm)
-{   
+{
     bool bRes = false;
     try
     {
         boost::program_options::options_description desc("Command Parser");
         desc.add_options()
+                ("help,h", "show help")
                 ("set_system_xml,x",
                  boost::program_options::value<std::string>(),
                  "set_system_xml <some_system_xml> file")
+                ( "show_config,c", "output config")
+                ( "show_groups,g", "output groups")
                 ;
         boost::program_options::store(boost::program_options::parse_command_line(ac,av,desc), vm);
-
-        if (vm.size() == 0)
-            std::cout << desc << std::endl;
+        std::cout << std::endl << std::endl;
+        if(vm.count("help") || ( vm.size() == 0 ))
+            std::cout << desc << std::endl << std::endl;
         else
         {
             boost::program_options::notify(vm);
@@ -78,15 +126,16 @@ bool cinArg (int ac, char* av[], boost::program_options::variables_map& vm)
     return bRes;
 }
 
-bool checkArg(const boost::program_options::variables_map& vm, std::vector<std::string> vFileName,
-              const std::string& sEnvir, const std::string& sSystemXml)
+
+bool checkArg(const boost::program_options::variables_map& vm, std::vector<std::string>& vFileName,
+              const std::string& sEnvir, const std::string& sSystemXml, std::vector<std::string>& vArr)
 {   
     bool bRes = false;
     try
     {
         if (vm.count("set_system_xml") == 1)
         {
-            std::cout << "arg:" << vm["set_system_xml"].as<std::string>() << std::endl;
+            std::cout << "arg:" << vm["set_system_xml"].as<std::string>() << std::endl << std::endl << std::endl;
             boost::filesystem::path pArg = vm["set_system_xml"].as<std::string>();
             std::string sArgName = pArg.string();
             int iCheckFileExistence = 0;
@@ -106,8 +155,13 @@ bool checkArg(const boost::program_options::variables_map& vm, std::vector<std::
                 }
             }
             else
-                std::cout << "ERR> File not found: " << sArgName  << std::endl;
+                std::cout << "ERR> File not found: " << sArgName  << std::endl << std::endl << std::endl;
         }
+        if(vm.count("show_config") == 1)
+            outputCfg(vArr);
+
+        if(vm.count("show_groups") == 1)
+            outputGroups(vFileName, sEnvir, sSystemXml);
     }
     catch(std::exception& e)
     {
@@ -120,37 +174,11 @@ bool checkArg(const boost::program_options::variables_map& vm, std::vector<std::
     return bRes;
 }
 
-bool outputCfg(const boost::program_options::variables_map& vm, std::vector<std::string> vFileName,
-               const std::string& sEnvir, const std::string& sSystemXml)
-{
-    checkArg(vm, vFileName, sEnvir, sSystemXml);
-    plug_key::CModeInfoPlug lib;
-    bool bRes = lib.Load();
-    std::cout << std::endl << std::endl;
-    std::cout << "RES>" << bRes << std::endl << std::endl;
-    std::vector<std::string> vArr;
-    vArr.push_back("%NITAROOT%");
-    vArr.push_back("[GROUP]");
-    vArr.push_back("[CFG]");
-    vArr.push_back("[PRODUCT]");
-    vArr.push_back("[MODE]");
-    vArr.push_back("[LANG]");
-    vArr.push_back("[COMPUTER]");
-    vArr.push_back("[UID]");
-    for (unsigned int i = 0; i < vArr.size(); i++)
-    {
-        std::cout << vArr[i] << " = ";
-        lib.ExpandString(vArr[i]);
-        std::cout<< "\"" << vArr[i] << "\"" << std::endl;
-    }
-    return bRes;
-    lib.Free();
-}
-
 int main(int argc, char* argv[])
 {
     std::string sEnvir = getenv("NITAETC");
     std::string sSystemXml = "/system.xml";
+    std::vector<std::string> vArr;
     std::vector<std::string> vFileName;
     try
     {
@@ -158,24 +186,9 @@ int main(int argc, char* argv[])
         for ( ; it != end; ++it)
             vFileName.push_back(it->path().filename().string());
 
-        if (boost::filesystem::is_symlink(sEnvir+sSystemXml))
-            std::cout << "system.xml -> " << boost::filesystem::read_symlink(sEnvir+sSystemXml) << std::endl;
-        else
-            std::cout << "ERR> Symlink not found" << std::endl;
-
-        std::cout << "NITAETC groups:" << std::endl;
-        for (unsigned int i = 0; i < vFileName.size(); i++)
-        {
-            Rename(vFileName[i]);
-            if (checkSystem(vFileName[i]) && checkXml(vFileName[i]))
-                std::cout << vFileName[i] << std::endl;
-        }
-        std::cout << std::endl << std::endl;
-
         boost::program_options::variables_map vm;
         cinArg(argc, argv, vm);
-        outputCfg(vm, vFileName, sEnvir, sSystemXml);
-        std::cout << std::endl << std::endl;
+        checkArg(vm, vFileName, sEnvir, sSystemXml, vArr);
     }
     catch (const std::exception& e)
     {
