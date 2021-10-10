@@ -83,11 +83,40 @@ bool outputGroups(std::vector<std::string>& vFileName, const std::string& sEnvir
         Rename(vFileName[i]);
         if (checkSystem(vFileName[i]) && checkXml(vFileName[i]))
         {
+            if(boost::filesystem::read_symlink(sEnvir+sSystemXml) == vFileName[i])
+                std::cout << "*";
             std::cout << vFileName[i] << std::endl;
             bRes = true;
         }
     }
     std::cout << std::endl << std::endl;
+    return bRes;
+}
+
+bool simplCheckArg(std::string& sFileName, std::string& sSymbolFileName)
+{
+    bool bRes = false;
+    sFileName.erase(0, 6);
+    sFileName.erase(sFileName.length() - 4);
+    if (sFileName.find(".") == 0 || sFileName.find("_") == 0 || sFileName.find("-") == 0)
+    {
+        sSymbolFileName = sFileName.substr(0, 1);
+        sFileName.erase(0, 1);
+        bRes = true;
+    }
+    return bRes;
+}
+
+bool afterSimplCheckArg(std::string& sFileName, std::string& sSymbolFileName)
+{
+    bool bRes = false;
+    sFileName.insert(0, "system");
+    sFileName.insert(sFileName.length(), ".xml");
+    if (sSymbolFileName == "." || sSymbolFileName == "_" || sSymbolFileName == "-")
+    {
+        sFileName.insert(6, sSymbolFileName);
+        bRes = true;
+    }
     return bRes;
 }
 
@@ -126,7 +155,6 @@ bool cinArg (int ac, char* av[], boost::program_options::variables_map& vm)
     return bRes;
 }
 
-
 bool checkArg(const boost::program_options::variables_map& vm, std::vector<std::string>& vFileName,
               const std::string& sEnvir, const std::string& sSystemXml, std::vector<std::string>& vArr)
 {   
@@ -138,7 +166,23 @@ bool checkArg(const boost::program_options::variables_map& vm, std::vector<std::
             std::cout << "arg:" << vm["set_system_xml"].as<std::string>() << std::endl << std::endl << std::endl;
             boost::filesystem::path pArg = vm["set_system_xml"].as<std::string>();
             std::string sArgName = pArg.string();
+            std::string sSymbolFileName;
             int iCheckFileExistence = 0;
+
+            for (unsigned int i = 0; i < vFileName.size(); i++)
+            {
+                if(checkSystem(vFileName[i]) && checkXml(vFileName[i]))
+                {
+                    simplCheckArg(vFileName[i], sSymbolFileName);
+                    if (sArgName == vFileName[i])
+                    {
+                        afterSimplCheckArg(vFileName[i], sSymbolFileName);
+                        sArgName = vFileName[i];
+                        iCheckFileExistence++;
+                    }
+                    afterSimplCheckArg(vFileName[i], sSymbolFileName);
+                }
+            }
 
             for (unsigned int i = 0; i < vFileName.size(); i++)
                 if (sArgName == vFileName[i])
@@ -150,7 +194,7 @@ bool checkArg(const boost::program_options::variables_map& vm, std::vector<std::
                 {
                     if (boost::filesystem::is_symlink(sEnvir+sSystemXml))
                         boost::filesystem::remove(sEnvir+sSystemXml);
-                    boost::filesystem::create_symlink(pArg, sEnvir+sSystemXml);
+                    boost::filesystem::create_symlink(sArgName, sEnvir+sSystemXml);
                     bRes = true;
                 }
             }
