@@ -98,10 +98,15 @@ bool simplCheckArg(std::string& sFileName, std::string& sSymbolFileName)
     bool bRes = false;
     sFileName.erase(0, 6);
     sFileName.erase(sFileName.length() - 4);
-    if (sFileName.find(".") == 0 || sFileName.find("_") == 0 || sFileName.find("-") == 0)
+    if (sFileName.find_first_of("._-") == 0)
     {
         sSymbolFileName = sFileName.substr(0, 1);
         sFileName.erase(0, 1);
+        bRes = true;
+    }
+    else if (sFileName.find_first_of("._-") != 0)
+    {
+        sSymbolFileName = "notFound";
         bRes = true;
     }
     return bRes;
@@ -112,11 +117,14 @@ bool afterSimplCheckArg(std::string& sFileName, std::string& sSymbolFileName)
     bool bRes = false;
     sFileName.insert(0, "system");
     sFileName.insert(sFileName.length(), ".xml");
-    if (sSymbolFileName == "." || sSymbolFileName == "_" || sSymbolFileName == "-")
+    std::string sDelimiters = "._-";
+    if (sSymbolFileName.find_first_of(sDelimiters)!=std::string::npos)
     {
         sFileName.insert(6, sSymbolFileName);
         bRes = true;
     }
+    else if (sSymbolFileName.find_first_of(sDelimiters) == std::string::npos)
+        bRes = true;
     return bRes;
 }
 
@@ -167,36 +175,37 @@ bool checkArg(const boost::program_options::variables_map& vm, std::vector<std::
             boost::filesystem::path pArg = vm["set_system_xml"].as<std::string>();
             std::string sArgName = pArg.string();
             std::string sSymbolFileName;
-            int iCheckFileExistence = 0;
+            bool bCheckFileExistence = false;
 
             for (unsigned int i = 0; i < vFileName.size(); i++)
             {
+
                 if(checkSystem(vFileName[i]) && checkXml(vFileName[i]))
                 {
+                    if (sArgName == vFileName[i])
+                    {
+                        bCheckFileExistence = true;
+                        break;
+                    }
+
                     simplCheckArg(vFileName[i], sSymbolFileName);
                     if (sArgName == vFileName[i])
                     {
                         afterSimplCheckArg(vFileName[i], sSymbolFileName);
                         sArgName = vFileName[i];
-                        iCheckFileExistence++;
+                        bCheckFileExistence = true;
+                        break;
                     }
                     afterSimplCheckArg(vFileName[i], sSymbolFileName);
                 }
             }
 
-            for (unsigned int i = 0; i < vFileName.size(); i++)
-                if (sArgName == vFileName[i])
-                    iCheckFileExistence++;
-
-            if (iCheckFileExistence > 0)
+            if (bCheckFileExistence == 1)
             {
-                if (checkSystem(sArgName) && checkXml(sArgName))
-                {
-                    if (boost::filesystem::is_symlink(sEnvir+sSystemXml))
-                        boost::filesystem::remove(sEnvir+sSystemXml);
-                    boost::filesystem::create_symlink(sArgName, sEnvir+sSystemXml);
-                    bRes = true;
-                }
+                if (boost::filesystem::is_symlink(sEnvir+sSystemXml))
+                    boost::filesystem::remove(sEnvir+sSystemXml);
+                boost::filesystem::create_symlink(sArgName, sEnvir+sSystemXml);
+                bRes = true;
             }
             else
                 std::cout << "ERR> File not found: " << sArgName  << std::endl << std::endl << std::endl;
