@@ -11,6 +11,9 @@
 #include <boost/optional.hpp>
 #include <iostream>
 
+const char c_szDelimiters[] = "._-+=";
+
+
 bool checkSystem (const std::string& sFileName)
 {
     bool bRes = false;
@@ -35,100 +38,84 @@ bool checkXml (const std::string& sFileName)
     return bRes;
 }
 
-bool Rename (std::string& sFileName)
-{
-    bool bRes = false;
-    if (sFileName == "system.xml")
-    {
-        sFileName += ".bak";
-        bRes = true;
-    }
-    return bRes;
-}
-
-bool outputCfg(std::vector<std::string>& vArr)
+bool outputCfg()
 {
     plug_key::CModeInfoPlug lib;
     bool bRes = lib.Load();
     std::cout << "RES>" << bRes << std::endl << std::endl;
-    vArr.push_back("%NITAROOT%");
-    vArr.push_back("[GROUP]");
-    vArr.push_back("[CFG]");
-    vArr.push_back("[PRODUCT]");
-    vArr.push_back("[MODE]");
-    vArr.push_back("[LANG]");
-    vArr.push_back("[COMPUTER]");
-    vArr.push_back("[UID]");
-    for (unsigned int i = 0; i < vArr.size(); i++)
+    std::vector<std::string> vExpandable;
+    vExpandable.push_back("%NITAROOT%");
+    vExpandable.push_back("[GROUP]");
+    vExpandable.push_back("[CFG]");
+    vExpandable.push_back("[PRODUCT]");
+    vExpandable.push_back("[MODE]");
+    vExpandable.push_back("[LANG]");
+    vExpandable.push_back("[COMPUTER]");
+    vExpandable.push_back("[UID]");
+    for (unsigned int i = 0; i < vExpandable.size(); i++)
     {
-        std::cout << vArr[i] << " = ";
-        lib.ExpandString(vArr[i]);
-        std::cout<< "\"" << vArr[i] << "\"" << std::endl;
+        std::cout << vExpandable[i] << " = ";
+        lib.ExpandString(vExpandable[i]);
+        std::cout<< "\"" << vExpandable[i] << "\"" << std::endl;
     }
     std::cout << std::endl << std::endl;
     lib.Free();
     return bRes;
 }
 
-bool outputGroups(std::vector<std::string>& vFileName, const std::string& sEnvir, const std::string& sSystemXml)
+bool outputGroups(std::vector<std::string>& vFileName, const std::string& sPath, const std::string& sSystemXml)
 {
     bool bRes = false;
-    if (boost::filesystem::is_symlink(sEnvir+sSystemXml))
-        std::cout << "system.xml -> " << boost::filesystem::read_symlink(sEnvir+sSystemXml) << std::endl;
+    if (boost::filesystem::is_symlink(sPath+sSystemXml))
+        std::cout << "system.xml -> " << boost::filesystem::read_symlink(sPath+sSystemXml) << std::endl;
     else
         std::cout << "ERR> Symlink not found" << std::endl;
     std::cout << "NITAETC groups:" << std::endl;
     for (unsigned int i = 0; i < vFileName.size(); i++)
     {
-        Rename(vFileName[i]);
-        if (checkSystem(vFileName[i]) && checkXml(vFileName[i]))
+        if(vFileName[i] != "system.xml")
         {
-            if(boost::filesystem::read_symlink(sEnvir+sSystemXml) == vFileName[i])
-                std::cout << "*";
-            std::cout << vFileName[i] << std::endl;
-            bRes = true;
+            if (checkSystem(vFileName[i]) && checkXml(vFileName[i]))
+            {
+                if(boost::filesystem::read_symlink(sPath+sSystemXml) == vFileName[i])
+                    std::cout << "*";
+                std::cout << vFileName[i] << std::endl;
+                bRes = true;
+            }
         }
     }
     std::cout << std::endl << std::endl;
     return bRes;
 }
 
-bool simplCheckArg(std::string& sFileName, std::string& sSymbolFileName)
+bool checkArgSimple(std::string& sFileName, std::string& sArgName)
 {
     bool bRes = false;
     sFileName.erase(0, 6);
     sFileName.erase(sFileName.length() - 4);
-    if (sFileName.find_first_of("._-") == 0)
+    std::string sDelimiter;
+    if (sFileName.find_first_of(c_szDelimiters) == 0)
     {
-        sSymbolFileName = sFileName.substr(0, 1);
+        sDelimiter = sFileName.substr(0, 1);
         sFileName.erase(0, 1);
-        bRes = true;
     }
-    else if (sFileName.find_first_of("._-") != 0)
-    {
-        sSymbolFileName = "notFound";
-        bRes = true;
-    }
-    return bRes;
-}
+    else
+        sDelimiter = "notFound";
 
-bool afterSimplCheckArg(std::string& sFileName, std::string& sSymbolFileName)
-{
-    bool bRes = false;
+    if (sArgName == sFileName)
+        bRes = true;
+
     sFileName.insert(0, "system");
     sFileName.insert(sFileName.length(), ".xml");
-    std::string sDelimiters = "._-";
-    if (sSymbolFileName.find_first_of(sDelimiters)!=std::string::npos)
-    {
-        sFileName.insert(6, sSymbolFileName);
-        bRes = true;
-    }
-    else if (sSymbolFileName.find_first_of(sDelimiters) == std::string::npos)
-        bRes = true;
+    if (sDelimiter.find_first_of(c_szDelimiters)!=std::string::npos)
+        sFileName.insert(6, sDelimiter);
+
+    if (bRes == 1)
+        sArgName = sFileName;
     return bRes;
 }
 
-bool cinArg (int ac, char* av[], boost::program_options::variables_map& vm)
+bool cinArg(int ac, char* av[], boost::program_options::variables_map& vm)
 {
     bool bRes = false;
     try
@@ -163,85 +150,68 @@ bool cinArg (int ac, char* av[], boost::program_options::variables_map& vm)
     return bRes;
 }
 
-bool checkArg(const boost::program_options::variables_map& vm, std::vector<std::string>& vFileName,
-              const std::string& sEnvir, const std::string& sSystemXml, std::vector<std::string>& vArr)
+bool checkArg(std::vector<std::string>& vFileName, std::string& sArgName)              
 {   
     bool bRes = false;
-    try
+    for (unsigned int i = 0; i < vFileName.size(); i++)
     {
-        if (vm.count("set_system_xml") == 1)
+        if(checkSystem(vFileName[i]) && checkXml(vFileName[i]))
         {
-            std::cout << "arg:" << vm["set_system_xml"].as<std::string>() << std::endl << std::endl << std::endl;
-            boost::filesystem::path pArg = vm["set_system_xml"].as<std::string>();
-            std::string sArgName = pArg.string();
-            std::string sSymbolFileName;
-            bool bCheckFileExistence = false;
-
-            for (unsigned int i = 0; i < vFileName.size(); i++)
+            checkArgSimple(vFileName[i], sArgName);
+            if (sArgName == vFileName[i])
             {
-
-                if(checkSystem(vFileName[i]) && checkXml(vFileName[i]))
-                {
-                    if (sArgName == vFileName[i])
-                    {
-                        bCheckFileExistence = true;
-                        break;
-                    }
-
-                    simplCheckArg(vFileName[i], sSymbolFileName);
-                    if (sArgName == vFileName[i])
-                    {
-                        afterSimplCheckArg(vFileName[i], sSymbolFileName);
-                        sArgName = vFileName[i];
-                        bCheckFileExistence = true;
-                        break;
-                    }
-                    afterSimplCheckArg(vFileName[i], sSymbolFileName);
-                }
-            }
-
-            if (bCheckFileExistence == 1)
-            {
-                if (boost::filesystem::is_symlink(sEnvir+sSystemXml))
-                    boost::filesystem::remove(sEnvir+sSystemXml);
-                boost::filesystem::create_symlink(sArgName, sEnvir+sSystemXml);
                 bRes = true;
+                break;
             }
-            else
-                std::cout << "ERR> File not found: " << sArgName  << std::endl << std::endl << std::endl;
         }
-        if(vm.count("show_config") == 1)
-            outputCfg(vArr);
+    }
+    return bRes;
+}
 
-        if(vm.count("show_groups") == 1)
-            outputGroups(vFileName, sEnvir, sSystemXml);
-    }
-    catch(std::exception& e)
-    {
-        std::cerr << "error: " << e.what() << std::endl;
-    }
-    catch(...)
-    {
-        std::cerr << "Exception of unknown type!" << std::endl;
-    }
+bool setSystemXml(const std::string& sPath,const std::string& sSystemXml,const std::string& sArgName)
+{
+    bool bRes = false;
+    if (boost::filesystem::is_symlink(sPath+sSystemXml))
+        boost::filesystem::remove(sPath+sSystemXml);
+
+    boost::filesystem::create_symlink(sArgName, sPath+sSystemXml);
+    if (boost::filesystem::is_symlink(sPath+sSystemXml))
+        bRes = true;
+    else
+        std::cout << "Symlink not created" << std::endl;
     return bRes;
 }
 
 int main(int argc, char* argv[])
 {
-    std::string sEnvir = getenv("NITAETC");
+    std::string sPath = getenv("NITAETC");
     std::string sSystemXml = "/system.xml";
-    std::vector<std::string> vArr;
     std::vector<std::string> vFileName;
     try
     {
-        boost::filesystem::directory_iterator it(sEnvir), end;
+        boost::filesystem::directory_iterator it(sPath), end;
         for ( ; it != end; ++it)
             vFileName.push_back(it->path().filename().string());
 
         boost::program_options::variables_map vm;
         cinArg(argc, argv, vm);
-        checkArg(vm, vFileName, sEnvir, sSystemXml, vArr);
+
+        if (vm.count("set_system_xml") == 1)
+        {
+            std::cout << "arg:" << vm["set_system_xml"].as<std::string>() << std::endl << std::endl << std::endl;
+            std::string sArgName = vm["set_system_xml"].as<std::string>();
+
+            if (checkArg(vFileName, sArgName) == 1)
+                setSystemXml(sPath, sSystemXml, sArgName);
+            else
+                std::cout << "ERR> File not found: " << sArgName  << std::endl << std::endl << std::endl;
+        }
+
+        if(vm.count("show_config") == 1)
+            outputCfg();
+
+        if(vm.count("show_groups") == 1)
+            outputGroups(vFileName, sPath, sSystemXml);
     }
     catch (const std::exception& e)
     {
