@@ -93,30 +93,28 @@ bool outputGroups(std::vector<std::string>& vFileName, const std::string& sPath,
     return bRes;
 }
 
-bool checkArgSimple(std::string& sFileName, std::string& sArgName)
+bool checkArgSimple(const std::string& sFileName, const std::string& sArgName)
 {
     bool bRes = false;
-    sFileName.erase(0, 6);
-    sFileName.erase(sFileName.length() - 4);
+    std::string sFileNameForCheck = sFileName;
+    sFileNameForCheck.erase(0, 6);
+    sFileNameForCheck.erase(sFileNameForCheck.length() - 4);
     std::string sDelimiter;
-    if (sFileName.find_first_of(c_szDelimiters) == 0)
+    if (sFileNameForCheck.find_first_of(c_szDelimiters) == 0)
     {
-        sDelimiter = sFileName.substr(0, 1);
-        sFileName.erase(0, 1);
+        sDelimiter = sFileNameForCheck.substr(0, 1);
+        sFileNameForCheck.erase(0, 1);
     }
     else
         sDelimiter = "notFound";
 
-    if (sArgName == sFileName)
+    if (sArgName == sFileNameForCheck)
         bRes = true;
 
-    sFileName.insert(0, "system");
-    sFileName.insert(sFileName.length(), ".xml");
+    sFileNameForCheck.insert(0, "system");
+    sFileNameForCheck.insert(sFileNameForCheck.length(), ".xml");
     if (sDelimiter.find_first_of(c_szDelimiters)!=std::string::npos)
-        sFileName.insert(6, sDelimiter);
-
-    if (bRes == 1)
-        sArgName = sFileName;
+        sFileNameForCheck.insert(6, sDelimiter);
     return bRes;
 }
 
@@ -156,15 +154,21 @@ bool cinArg(int ac, char* av[], boost::program_options::variables_map& vm)
     return bRes;
 }
 
-std::string getFileByArg (std::vector<std::string>& vFileName, std::string& sArgName)
+std::string getFileByArg (const std::vector<std::string>& vFileName, std::string& sArgName)
 {   
     std::string sRetrievedFileName;
     for (unsigned int i = 0; i < vFileName.size(); i++)
     {
-        std::string& sFileName = vFileName[i];
+        std::string sFileName = vFileName[i];
         if(checkSystem(sFileName) && checkXml(sFileName))
         {
-            checkArgSimple(sFileName, sArgName);
+            if(checkArgSimple(sFileName, sArgName) == 1)
+            {
+                sArgName = sFileName;
+                sRetrievedFileName = sArgName;
+                break;
+            }
+
             if (sArgName == sFileName)
             {
                 sRetrievedFileName = sArgName;
