@@ -56,7 +56,7 @@ bool outputCfg()
     for (unsigned int i = 0; i < vExpandable.size(); i++)
     {
         std::string& sExpandable = vExpandable[i];
-        std::cout << sExpandable << " = ";
+        std::cout << sExpandable << " = \t";
         lib.ExpandString(sExpandable);
         std::cout<< "\"" << sExpandable << "\"" << std::endl;
     }
@@ -83,7 +83,7 @@ bool outputGroups(std::vector<std::string>& vFileName, const std::string& sPath,
             if (checkSystem(sFileName) && checkXml(sFileName))
             {
                 if(boost::filesystem::read_symlink(sPath+sSystemXml) == sFileName)
-                    std::cout << "*";
+                    std::cout << " *";
                 std::cout << sFileName << std::endl;
                 bRes = true;
             }
@@ -154,7 +154,7 @@ bool cinArg(int ac, char* av[], boost::program_options::variables_map& vm)
     return bRes;
 }
 
-std::string getFileByArg (const std::vector<std::string>& vFileName, std::string& sArgName)
+std::string getFileByArg (const std::vector<std::string>& vFileName, const std::string& sArgName)
 {   
     std::string sRetrievedFileName;
     for (unsigned int i = 0; i < vFileName.size(); i++)
@@ -164,8 +164,7 @@ std::string getFileByArg (const std::vector<std::string>& vFileName, std::string
         {
             if(checkArgSimple(sFileName, sArgName) == 1)
             {
-                sArgName = sFileName;
-                sRetrievedFileName = sArgName;
+                sRetrievedFileName = sFileName;
                 break;
             }
 
@@ -198,6 +197,15 @@ bool setSystemXml(const std::string& sPath,const std::string& sSystemXml,const s
 int main(int argc, char* argv[])
 {
     std::string sPath = getenv("NITAETC");
+    bool bCheckPath = getenv("NITAETC");
+    if (!bCheckPath)
+    {
+       #ifdef WIN32
+            sPath = "c:\\Nita\\Config";
+       #else
+            sPath = "/soft/etc";
+       #endif
+    }
     std::string sSystemXml = "/system.xml";
     std::vector<std::string> vFileName;
     try
@@ -215,9 +223,9 @@ int main(int argc, char* argv[])
             std::string sArgName = vm["set_system_xml"].as<std::string>();
             std::string sFileName = getFileByArg(vFileName, sArgName);
             if (!sFileName.empty())
-                setSystemXml(sPath, sSystemXml, sArgName);
+                setSystemXml(sPath, sSystemXml, sFileName);
             else
-                std::cout << "ERR> File not found: " << sArgName  << std::endl << std::endl << std::endl;
+                std::cout << "ERR> Can't set system.xml by name: " << sArgName << std::endl << std::endl << std::endl;
         }
 
         if(vm.count("show_config"))
